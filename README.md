@@ -23,6 +23,8 @@ You will need to have parity, which can be done by downloading a binary release 
 cd ~/
 wget https://parity-downloads-mirror.parity.io/v1.8.5/x86_64-unknown-linux-gnu/parity
 chmod 755 ./parity
+touch passfile
+# ^ ok for this to be empty
 ```
 
 Ensure you have the latest version of node installed.

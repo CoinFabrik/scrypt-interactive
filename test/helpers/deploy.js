@@ -32,13 +32,11 @@ async function deployContract (c_code, c_abi, c_addr, b_account, c_gas, bool_log
 }
 
 async function setupAccount (_account) {
-  console.log('Account setup...'.green)
   var account = _account || await web3.eth.personal.newAccount('')
   console.log('Using account: '.cyan + account.cyan)
   await web3.personal.unlockAccount(account, '', '0x1000000')
-  // await web3.miner.start(2)
-  // var account = "0x292248f34a6e929dd4820535b41219ba81d79255"
-  return _account
+
+  return account
 }
 
 console.log('Compiling contracts...'.green)
