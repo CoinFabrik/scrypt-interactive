@@ -1,44 +1,71 @@
-const timeout = require('./helpers/timeout')
+require('dotenv').config()
+const promisify = require('es6-promisify')
+
+const { web3, parity } = require('../client/bridge-to-the-moon/util/web3s')
+const getAccounts = async () => new Promise((resolve, reject) => {
+  web3.eth.getAccounts((err, res) => {
+    console.log(err, res)
+    if (err) return reject(err)
+    resolve(res)
+  })
+})
+
 const dataFormatter = require('./helpers/dataFormatter')
-const offchain = require('./helpers/offchain')
 
-const ClaimManager = artifacts.require('ClaimManager')
-const ScryptVerifier = artifacts.require('ScryptVerifier')
-const ScryptRunner = artifacts.require('ScryptRunner')
+const getContracts = require('../client/bridge-to-the-moon/util/getContracts')
 
-contract('ClaimManager', function (accounts) {
-  const steps = 2050
+describe('ClaimManager', function () {
+  // const steps = 2050
   const claimDeposit = 1
 
-  const [
-    dogeRelayAddress,
+  let dogeRelayAddress,
     claimant,
-    challenger,
-  ] = accounts
-
+    challenger
   let claimManager,
     scryptVerifier,
     scryptRunner
   let claimID, sessionId
   let tx, session, result, log, deposit
 
+  // eslint-disable-next-line max-len
   const serializedBlockHeader = '030162002adb34dfa6574cf127a781ecb9683ca28f911a59020628c90c72b4a3d9942233a3b905b2388b020085dbd9e03209db4493f5420336d882d0b78b54f728b8f90058f7115a2c83221a00000000'
   const testScryptHash = 'ce60a0d4a7c2223a94437d44fe4d33a30489436714d18376f9ebc5e2bd6e5682'
 
   context('normal conditions', function () {
     before(async () => {
-      scryptRunner = await offchain.scryptRunner()
-      
-      console.log('scryptRunner deployed')
-      scryptVerifier = await ScryptVerifier.new()
-      claimManager = await ClaimManager.new(dogeRelayAddress, scryptVerifier.address)
+      // console.log(accounts)
+      // console.log(await getAccounts())
+      let accounts = await new Promise((resolve, reject) => {
+        web3.eth.getAccounts((err, res) => {
+          if (err) return reject(err)
+          resolve(res)
+        })
+      })
+
+      dogeRelayAddress = accounts[0]
+      claimant = accounts[1]
+      challenger = accounts[2]
+
+      const contracts = await getContracts({ web3, parity })
+      scryptRunner = await contracts.ScryptRunner.new()
+      scryptVerifier = await contracts.ScryptVerifier.new()
+      claimManager = await contracts.ClaimManager.new(
+        dogeRelayAddress,
+        scryptVerifier.address
+      )
     })
 
     it('claimant checks scrypt', async () => {
       await claimManager.makeDeposit({ from: claimant, value: claimDeposit })
 
       try {
-        tx = await claimManager.checkScrypt(serializedBlockHeader, testScryptHash, claimant, 'foo', { from: dogeRelayAddress })
+        tx = await claimManager.checkScrypt(
+          serializedBlockHeader,
+          testScryptHash,
+          claimant,
+          'foo',
+          { from: dogeRelayAddress }
+        )
         log = tx.logs.find(l => l.event === 'ClaimCreated')
         claimID = log.args.claimID.toNumber()
       } catch (e) {

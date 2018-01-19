@@ -1,24 +1,69 @@
+
+const contract = require('truffle-contract')
 const promisify = require('es6-promisify')
 const path = require('path')
 const readFile = promisify(require('fs').readFile)
 
-const abisLocation = process.env.BTTM_ABI_LOCATION || '../../../build/contracts'
-const abiPath = (name) => path.resolve(__dirname, abisLocation, `${name}.json`)
-const getAbi = async (name) => JSON.parse(await readFile(abiPath(name), 'utf8')).abi
+const artifactDir = process.env.BTTM_ARTIFACT_DIR || '../../../build/contracts'
+const artifactPath = (name) => path.resolve(__dirname, artifactDir, `${name}.json`)
+const getArtifact = async (name) => JSON.parse(await readFile(artifactPath(name), 'utf8'))
 
-module.exports = async (web3) => {
-  const getContract = async (name, address) =>
-    web3.eth.contract(await getAbi(name)).at(address)
+module.exports = async ({ web3, parity }) => {
+  const getContract = async (name, provider = web3.currentProvider) => {
+    const AbstractContract = contract(await getArtifact(name))
+    AbstractContract.setProvider(provider)
+    return AbstractContract
+  }
 
-  const claimManager = await getContract('ClaimManager', process.env.CLAIM_MANAGER_ADDRESS)
-  const scryptVerifier = await getContract('ScryptVerifier', process.env.SCRYPT_VERIFIER_ADDRESS)
-  const scryptRunner = await getContract('ScryptVerifier', process.env.SCRYPT_RUNNER_ADDRESS)
-  const dogeRelay = await getContract('DogeRelay', process.env.DOGE_RELAY_ADDRESS)
+  const ClaimManager = await getContract('ClaimManager')
+  const ScryptVerifier = await getContract('ScryptVerifier')
+  const ScryptRunner = await getContract('ScryptVerifier')
+  // ^ this one contract is on the parity dev chain
+  const DogeRelay = await getContract('DogeRelay')
 
   return {
-    claimManager,
-    scryptVerifier,
-    scryptRunner,
-    dogeRelay
+    getContract,
+    ClaimManager,
+    ScryptVerifier,
+    ScryptRunner,
+    DogeRelay,
+    at: ({
+      claimManagerAddress,
+      scryptVerifierAddress,
+      scryptRunnerAddress,
+      dogeRelayAddress
+    }) => ({
+      claimManager: ClaimManager.at(claimManagerAddress),
+      scryptVerifier: ScryptVerifier.at(scryptVerifierAddress),
+      scryptRunner: ScryptRunner.at(scryptRunnerAddress),
+      dogeRelay: DogeRelay.at(dogeRelayAddress),
+    }),
+    deploy: async () => {
+      let test = web3.eth.contract(ScryptVerifier.abi)
+      console.log(web3.eth.defaultAccount)
+      console.log(web3.currentProvider)
+      console.log(test.new({
+        from: web3.eth.defaultAccount,
+        data: ScryptVerifier.bytecode,
+        gas: 8000000
+      }, console.log))
+
+      console.log('done?')
+
+      const scryptVerifier = await ScryptVerifier.new()
+      const claimManager = await ClaimManager.new(
+        process.env.DOGE_RELAY_ADDRESS,
+        scryptVerifier.address
+      )
+      const scryptRunner = await ScryptRunner.new()
+      const dogeRelay = DogeRelay.at(process.env.DOGE_RELAY_ADDRESS)
+
+      return {
+        claimManager,
+        scryptVerifier,
+        scryptRunner,
+        dogeRelay
+      }
+    }
   }
 }

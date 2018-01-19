@@ -8,7 +8,7 @@ cd bin
 wget https://parity-downloads-mirror.parity.io/v1.8.5/x86_64-unknown-linux-gnu/parity
 
 chmod 755 ./parity
-echo > passfile
+echo > tmp/passfile.txt
 
 npm cache verify
 npm install

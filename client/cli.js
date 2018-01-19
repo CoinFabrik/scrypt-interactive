@@ -3,12 +3,9 @@ require('dotenv').config()
 const program = require('commander')
 const selfText = require('./bridge-to-the-moon/util/selfText')
 
-const Web3 = require('web3')
-const web3 = new Web3(new Web3.providers.HttpProvider(process.env.WEB3_HTTP_PROVIDER))
+const { web3, parity } = require('./bridge-to-the-moon/util/web3s')
 
-const operator = process.env.OPERATOR_ADDRESS || web3.eth.defaultAccount || web3.eth.coinbase
-
-// web3.eth.defaultAccount = operator
+const operator = web3.eth.defaultAccount
 
 // sets up bridge
 const connectToBridge = async function (cmd) {
@@ -17,7 +14,7 @@ const connectToBridge = async function (cmd) {
   }
 
   cmd.log('Connecting to bridge...')
-  this.bridge = await require('./bridge-to-the-moon')(web3)
+  this.bridge = await require('./bridge-to-the-moon')({ web3, parity })
   cmd.log('Connected!')
 
   return this.bridge

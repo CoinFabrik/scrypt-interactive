@@ -1,11 +1,10 @@
-
 const _ = require('lodash')
+
 const { expect } = require('./helpers/chai')
 const dataFormatter = require('./helpers/dataFormatter')
-const offchain = require('./helpers/offchain')
 
-const ScryptVerifier = artifacts.require('ScryptVerifier')
-// const ScryptRunner = artifacts.require('ScryptRunner')
+const { web3, parity } = require('../client/bridge-to-the-moon/util/web3s')
+const getContracts = require('../client/bridge-to-the-moon/util/getContracts')
 
 const random = require('./helpers/random')
 
@@ -67,8 +66,9 @@ contract('ScryptVerifier', function (accounts) {
     scryptVerifier
 
   before(async () => {
-    scryptRunner = await offchain.scryptRunner()
-    scryptVerifier = await ScryptVerifier.new()
+    const contracts = await getContracts({ web3, parity })
+    scryptRunner = await contracts.ScryptRunner.new()
+    scryptVerifier = await contracts.ScryptVerifier.new()
   })
 
   context('Testing step values', () => {

@@ -4,8 +4,13 @@ const readdir = promisify(fs.readdir, fs)
 const blockheader = require('./util/blockheader')
 const getContracts = require('./util/getContracts')
 
-module.exports = async function(web3) {
-  const contracts = await getContracts(web3)
+module.exports = async function({ web3, parity }) {
+  const contracts = (await getContracts({ web3, parity })).at({
+    claimManagerAddress: process.env.CLAIM_MANAGER_ADDRESS,
+    scryptVerifierAddress: process.env.SCRYPT_VERIFIER_ADDRESS,
+    scryptRunnerAddress: process.env.SCRYPT_RUNNER_ADDRESS,
+    dogeRelayAddress: process.env.DOGE_RELAY_ADDRESS,
+  })
   const api = await require('./api')(contracts, web3)
   const stateMachines = await require('./state-machines')(web3, api)
 
