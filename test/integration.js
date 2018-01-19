@@ -12,29 +12,13 @@ describe('Integration!!', function () {
   let contracts
 
   before(async () => {
-    console.log('ok')
+    const contractAbstractions = await getContracts({ web3, parity })
 
-    const Web3 = require('web3')
-    Web3.providers.HttpProvider.prototype.sendAsync = Web3.providers.HttpProvider.prototype.send
-
-    const provider = new Web3.providers.HttpProvider(process.env.WEB3_HTTP_PROVIDER)
-
-    const web3 = new Web3(provider)
-    const contract = require('truffle-contract')
-    const promisify = require('es6-promisify')
-    const path = require('path')
-    const readFile = promisify(require('fs').readFile)
-
-    const artifactDir = '../build/contracts'
-    const artifactPath = (name) => path.resolve(__dirname, artifactDir, `${name}.json`)
-    const getArtifact = async (name) => JSON.parse(await readFile(artifactPath(name), 'utf8'))
-
-    const ScryptVerifier = contract(await getArtifact('ScryptVerifier'))
-    ScryptVerifier.setProvider(web3)
-    await ScryptVerifier.new()
+    await contractAbstractions.ClaimManager.new()
 
     console.log('done')
-    contracts = await (await getContracts({ web3, parity })).deploy()
+
+    contracts = await (contractAbstractions).deploy()
     process.env.SCRYPT_VERIFIER_ADDRESS = contracts.scryptVerifier.address
     process.env.SCRYPT_RUNNER_ADDRESS = contracts.scryptRunner.address
     process.env.CLAIM_MANAGER_ADDRESS = contracts.claimManager.address
