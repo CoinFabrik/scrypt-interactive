@@ -8,7 +8,6 @@ const parity = new Web3(new Web3.providers.HttpProvider(process.env.WEB3_PARITY_
 web3.eth.defaultAccount = process.env.OPERATOR_ADDRESS || web3.eth.defaultAccount || web3.eth.coinbase
 
 // parity.eth.defaultAccount = process.env.PARITY_UNLOCKED_ACCOUNT
-
 parity.personal.unlockAccount(parity.eth.defaultAccount, '')
 
 module.exports = {

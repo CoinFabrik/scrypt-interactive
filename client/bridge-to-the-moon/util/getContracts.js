@@ -15,7 +15,7 @@ module.exports = async ({ web3, parity }) => {
     return AbstractContract
   }
 
-  const ClaimManager = await getContract('ClaimManager')
+  const ClaimManager = await getContract('ClaimManager', web3.currentProvider)
   const ScryptVerifier = await getContract('ScryptVerifier')
   const ScryptRunner = await getContract('ScryptVerifier')
   // ^ this one contract is on the parity dev chain
@@ -39,24 +39,18 @@ module.exports = async ({ web3, parity }) => {
       dogeRelay: DogeRelay.at(dogeRelayAddress),
     }),
     deploy: async () => {
-      let test = web3.eth.contract(ScryptVerifier.abi)
-      console.log(web3.eth.defaultAccount)
-      console.log(web3.currentProvider)
-      console.log(test.new({
-        from: web3.eth.defaultAccount,
-        data: ScryptVerifier.bytecode,
-        gas: 8000000
-      }, console.log))
-
-      console.log('done?')
-
+      console.log('1')
       const scryptVerifier = await ScryptVerifier.new()
+      console.log('2')
       const claimManager = await ClaimManager.new(
         process.env.DOGE_RELAY_ADDRESS,
         scryptVerifier.address
       )
+      console.log('3')
       const scryptRunner = await ScryptRunner.new()
+      console.log('4')
       const dogeRelay = DogeRelay.at(process.env.DOGE_RELAY_ADDRESS)
+      console.log('5')
 
       return {
         claimManager,
